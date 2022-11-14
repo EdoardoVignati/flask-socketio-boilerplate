@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        logs = [];
+        var socket = io("ws://127.0.0.1:5000");
+        socket.on("connect", () => {
+            let level = $("input[name=level]").val();
+            socket.emit("join",{"level":level});
+        });
+        socket.on("new_logs", function(new_logs) {
+            logs = logs.concat(new_logs);
+            $("#logs").val(logs.join("\n"));
+
+            if($("input[name=autoscroll]").prop("checked"))
+                $("#logs").scrollTop($("#logs")[0].scrollHeight);
+        });
+    </script>
+</head>
+<body>
+<input type="radio" name="level" value="warning" autocomplete="off" checked>WARNINGS<br>
+<input type="radio" name="level" value="error" autocomplete="off">ERRORS<br>
+<input type="checkbox" name="autoscroll" autocomplete="off">Autoscroll<br>
+<textarea id="logs" rows="25" cols="70"></textarea>
+<script>
+    $("input[name=level]").change(function(){
+        let level = $(this).val();
+        logs=[];
+        if(level=="warning"){
+            socket.emit("leave",{"level":"error"});
+            socket.emit("join",{"level":"warning"});
+        }else{
+            socket.emit("leave",{"level":"warning"});
+            socket.emit("join",{"level":"error"});
+        }
+    });
+
+     $("input[name=autoscroll]").change(function(){
+        if($(this).prop("checked"))
+            $("#logs").scrollTop($("#logs")[0].scrollHeight);
+     });
+</script>
+</body>
+</html>
